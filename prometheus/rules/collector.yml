@@ -1,0 +1,80 @@
+# Three of these describe loss and one describes risk. Nothing alerts on
+# otelcol_exporter_send_failed_*, because a failed send attempt that the retry
+# then wins is not an incident, and paging on it trains people to ignore it.
+
+groups:
+  - name: collector-pipeline
+    interval: 30s
+    rules:
+      - alert: CollectorRefusingData
+        expr: rate(otelcol_exporter_enqueue_failed_spans[5m]) > 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: The gateway is refusing spans because its sending queue is full
+          description: >
+            Spans are being thrown away, not retried. Elasticsearch is behind,
+            or the queue is too small for the burst. Check
+            scripts/collector-health.py against :8888 before touching anything.
+
+      - alert: CollectorQueueSaturated
+        expr: otelcol_exporter_queue_size / otelcol_exporter_queue_capacity > 0.9
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: An exporter queue has been over 90 percent full for ten minutes
+          description: >
+            Nothing is lost yet. The queue is draining more slowly than it
+            fills, so loss is the next thing that happens.
+
+      - alert: TracesDroppedBeforeADecision
+        expr: rate(otelcol_processor_tail_sampling_sampling_trace_dropped_too_early[10m]) > 0
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: Traces are being evicted before their sampling window closes
+          description: >
+            num_traces is below the arrival rate times decision_wait, so the
+            gateway is deciding on partial traces. This looks like missing
+            spans in the UI and nothing looks broken anywhere else.
+
+      - alert: ReceiverRefusingSpans
+        expr: rate(otelcol_receiver_refused_spans[5m]) > 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: A collector is pushing back at the SDKs
+          description: >
+            memory_limiter is over its limit and the receiver is returning
+            RESOURCE_EXHAUSTED. The SDK retries, so this is backpressure
+            reaching the right place, but it does not fix itself.
+
+  - name: cardinality
+    interval: 1m
+    rules:
+      - alert: SeriesBudgetExceeded
+        expr: prometheus_tsdb_head_series > 100000
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: The head block holds more series than this stack budgets for
+          description: >
+            prometheus/label-budgets.json adds up to well under this. Run
+            scripts/check-budgets.py against the app metrics endpoint to find
+            which label grew.
+
+      - alert: ScrapeSampleLimitHit
+        expr: increase(prometheus_target_scrapes_exceeded_sample_limit_total[15m]) > 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: A scrape was rejected whole for exceeding its sample limit
+          description: >
+            Every series from that target is missing for those scrapes, not
+            just the new ones. Raise the limit deliberately or fix the labels.

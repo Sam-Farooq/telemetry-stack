@@ -85,11 +85,14 @@ def test_traces_are_routed_by_trace_id_and_metrics_are_not(
 def test_the_agent_points_at_the_port_the_gateway_listens_on(
     configs: dict[str, dict[str, Any]],
 ) -> None:
-    resolver = configs["agent.yaml"]["exporters"]["loadbalancing"]["resolver"]["dns"]
+    agent = configs["agent.yaml"]
+    resolver = agent["exporters"]["loadbalancing"]["resolver"]["dns"]
     gateway_grpc = configs["gateway.yaml"]["receivers"]["otlp"]["protocols"]["grpc"]["endpoint"]
     assert resolver["port"] == int(gateway_grpc.split(":")[-1])
-    assert resolver["hostname"] == "otel-gateway"
-    assert configs["agent.yaml"]["exporters"]["otlp/gateway"]["endpoint"] == "otel-gateway:4317"
+    # The host comes from the environment so compose and the chart can give it
+    # different names without the file being copied.
+    assert resolver["hostname"] == "${env:GATEWAY_DNS_NAME}"
+    assert agent["exporters"]["otlp/gateway"]["endpoint"] == "${env:GATEWAY_DNS_NAME}:4317"
 
 
 def test_the_sampling_policies_are_the_ones_the_python_implements(

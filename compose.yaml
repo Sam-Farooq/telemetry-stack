@@ -1,0 +1,139 @@
+# The whole pipeline, two collector tiers included, because a single collector
+# hides the reason the gateway exists. Ports are published only where something
+# outside the network needs them.
+
+name: telemetry-stack
+
+services:
+  kafka:
+    image: apache/kafka:3.8.0
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_NUM_PARTITIONS: 3
+    healthcheck:
+      test: ["CMD", "/opt/kafka/bin/kafka-topics.sh", "--bootstrap-server", "localhost:9092", "--list"]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.1
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      ES_JAVA_OPTS: -Xms1g -Xmx1g
+      # Deliberately small, so a local run reaches the rejection path that
+      # scripts/collector-health.py is for instead of only ever being green.
+      thread_pool.write.queue_size: "200"
+    ports: ["9200:9200"]
+    volumes: ["esdata:/usr/share/elasticsearch/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf localhost:9200/_cluster/health | grep -qv red"]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+
+  otel-gateway:
+    image: otel/opentelemetry-collector-contrib:0.119.0
+    command: ["--config=/etc/otelcol/gateway.yaml"]
+    environment:
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+    volumes:
+      - ./collector/gateway.yaml:/etc/otelcol/gateway.yaml:ro
+      - otelqueue:/var/lib/otelcol/queue
+    ports: ["8889:8889"]
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "/otelcol-contrib", "components"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  otel-agent:
+    image: otel/opentelemetry-collector-contrib:0.119.0
+    command: ["--config=/etc/otelcol/agent.yaml"]
+    environment:
+      GATEWAY_DNS_NAME: otel-gateway
+    volumes:
+      - ./collector/agent.yaml:/etc/otelcol/agent.yaml:ro
+    depends_on:
+      otel-gateway:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "/otelcol-contrib", "components"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=3d
+      - --web.enable-lifecycle
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/rules:/etc/prometheus/rules:ro
+    ports: ["9090:9090"]
+    depends_on:
+      otel-gateway:
+        condition: service_started
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_USERS_DEFAULT_THEME: light
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports: ["3000:3000"]
+    depends_on:
+      prometheus:
+        condition: service_started
+
+  checkout-api:
+    build: .
+    command: ["python", "services/checkout_api.py"]
+    environment:
+      OTEL_SERVICE_NAME: checkout-api
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-agent:4317
+      OTEL_RESOURCE_ATTRIBUTES: service.version=1.4.2,deployment.environment=local
+      KAFKA_BOOTSTRAP: kafka:9092
+      ORDERS_TOPIC: orders.placed
+      REQUESTS_PER_SECOND: "40"
+    depends_on:
+      kafka:
+        condition: service_healthy
+      otel-agent:
+        condition: service_started
+
+  settlement-worker:
+    build: .
+    command: ["python", "services/settlement_worker.py"]
+    environment:
+      OTEL_SERVICE_NAME: settlement-worker
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-agent:4317
+      OTEL_RESOURCE_ATTRIBUTES: service.version=0.9.7,deployment.environment=local
+      KAFKA_BOOTSTRAP: kafka:9092
+      ORDERS_TOPIC: orders.placed
+      CONSUMER_GROUP: settlement
+    depends_on:
+      kafka:
+        condition: service_healthy
+      otel-agent:
+        condition: service_started
+
+volumes:
+  esdata:
+  otelqueue:

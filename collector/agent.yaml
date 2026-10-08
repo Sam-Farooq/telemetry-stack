@@ -50,12 +50,15 @@ exporters:
           queue_size: 64
     resolver:
       dns:
-        hostname: otel-gateway
+        # Compose sets this to the gateway service name, the chart sets it to
+        # the headless service's cluster DNS name. One config file, two places
+        # to run it, no copy to keep in step.
+        hostname: "${env:GATEWAY_DNS_NAME}"
         port: 4317
 
   # Metrics have no trace id to route on, so they skip the load balancer.
   otlp/gateway:
-    endpoint: otel-gateway:4317
+    endpoint: "${env:GATEWAY_DNS_NAME}:4317"
     tls:
       insecure: true
     sending_queue:

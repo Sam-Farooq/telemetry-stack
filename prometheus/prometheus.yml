@@ -1,0 +1,40 @@
+# Scrape config for the two collector tiers and the metrics the gateway
+# re-exports. sample_limit is set on every job: a target that suddenly exposes
+# a million series is rejected at the scrape instead of taking the head block
+# with it, and prometheus_target_scrapes_exceeded_sample_limit_total says so.
+
+global:
+  scrape_interval: 15s
+  scrape_timeout: 10s
+  external_labels:
+    stack: telemetry-stack
+
+rule_files:
+  - /etc/prometheus/rules/collector.yml
+
+scrape_configs:
+  - job_name: otel-gateway
+    sample_limit: 5000
+    static_configs:
+      - targets: ["otel-gateway:8888"]
+
+  - job_name: otel-agent
+    sample_limit: 2000
+    static_configs:
+      - targets: ["otel-agent:8888"]
+
+  - job_name: app-metrics
+    sample_limit: 20000
+    static_configs:
+      - targets: ["otel-gateway:8889"]
+    metric_relabel_configs:
+      # A second line of defence behind the guard in telemetry/cardinality.py.
+      # If one of these ever appears as a label, it is dropped here rather than
+      # being indexed, and the budget check reports the breach separately.
+      - action: labeldrop
+        regex: customer_id|session_id|request_id|order_id
+
+  - job_name: prometheus
+    sample_limit: 2000
+    static_configs:
+      - targets: ["localhost:9090"]
