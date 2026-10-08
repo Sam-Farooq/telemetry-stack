@@ -88,7 +88,14 @@ def test_the_agent_points_at_the_port_the_gateway_listens_on(
     agent = configs["agent.yaml"]
     resolver = agent["exporters"]["loadbalancing"]["resolver"]["dns"]
     gateway_grpc = configs["gateway.yaml"]["receivers"]["otlp"]["protocols"]["grpc"]["endpoint"]
-    assert resolver["port"] == int(gateway_grpc.split(":")[-1])
+    # resolver.dns.port is declared as a string by the loadbalancing exporter and
+    # an int is refused outright, not coerced. This assertion used to read
+    # int(...) on both sides, which made it agree with a `port: 4317` that
+    # otelcol validate rejects with
+    # "'resolver.dns.port' expected type 'string', got unconvertible type 'int'".
+    # A test that coerces cannot see a type error, so it checks the type first.
+    assert isinstance(resolver["port"], str), "resolver.dns.port must be quoted"
+    assert resolver["port"] == gateway_grpc.split(":")[-1]
     # The host comes from the environment so compose and the chart can give it
     # different names without the file being copied.
     assert resolver["hostname"] == "${env:GATEWAY_DNS_NAME}"

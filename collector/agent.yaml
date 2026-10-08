@@ -54,7 +54,7 @@ exporters:
         # the headless service's cluster DNS name. One config file, two places
         # to run it, no copy to keep in step.
         hostname: "${env:GATEWAY_DNS_NAME}"
-        port: 4317
+        port: "4317"
 
   # Metrics have no trace id to route on, so they skip the load balancer.
   otlp/gateway:
