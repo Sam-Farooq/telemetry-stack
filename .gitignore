@@ -12,3 +12,4 @@ __pycache__/
 # elasticsearch data volume when it is bound instead of named
 esdata/
 .mypy_cache/
+.queue/

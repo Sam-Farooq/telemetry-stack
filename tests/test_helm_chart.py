@@ -66,3 +66,24 @@ def test_the_image_tag_matches_the_one_compose_runs(
     compose_tag = compose["services"]["otel-gateway"]["image"].split(":")[-1]
     assert str(values["image"]["tag"]) == compose_tag
     assert str(chart["appVersion"]) == compose_tag
+
+
+def test_the_chart_mounts_the_directory_file_storage_writes_to(repo_root: Path) -> None:
+    """The gateway's config refuses to start if its queue directory is absent.
+
+    That strictness is deliberate: it is what stops a gateway whose volume was
+    never mounted from coming up anyway and writing a "durable" queue onto the
+    container filesystem. The cost is that the mount path and the config path
+    have to agree, in two files that nothing else ties together.
+    """
+    gateway = (repo_root / "helm" / "templates" / "gateway.yaml").read_text(encoding="utf-8")
+    config = yaml.safe_load((repo_root / "collector" / "gateway.yaml").read_text(encoding="utf-8"))
+    directory = config["extensions"]["file_storage"]["directory"]
+
+    assert f"mountPath: {directory}" in gateway, (
+        f"the chart does not mount {directory}, so file_storage would refuse to start"
+    )
+    # A volumeClaimTemplate and not an emptyDir, because a restarted pod has to
+    # come back to the same bytes or the queue was never durable.
+    assert "volumeClaimTemplates:" in gateway
+    assert "emptyDir" not in gateway

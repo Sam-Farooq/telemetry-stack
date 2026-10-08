@@ -33,8 +33,17 @@ jobs:
       # worth the container pull.
       - name: validate the collector configs
         run: |
+          # file_storage refuses to start when its directory does not exist, and
+          # that is the behaviour to keep. compose supplies it as the otelqueue
+          # volume and the chart as a PVC. Setting create_directory instead would
+          # make a gateway whose volume was never mounted come up anyway and
+          # write its "durable" queue to the container filesystem, which is the
+          # exact failure the extension exists to prevent. So validate is given a
+          # real directory rather than the config being loosened.
+          mkdir -p "$PWD/.queue"
           for tier in agent gateway; do
             docker run --rm -v "$PWD/collector:/conf:ro" \
+              -v "$PWD/.queue:/var/lib/otelcol/queue" \
               -e ELASTICSEARCH_URL=http://elasticsearch:9200 \
               -e GATEWAY_DNS_NAME=otel-gateway \
               otel/opentelemetry-collector-contrib:0.119.0 \
