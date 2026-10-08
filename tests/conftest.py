@@ -19,3 +19,17 @@ def repo_root() -> Path:
 def log_records() -> list[dict[str, Any]]:
     lines = (FIXTURES / "logs.jsonl").read_text(encoding="utf-8").splitlines()
     return [json.loads(line) for line in lines if line.strip()]
+
+
+@pytest.fixture(scope="session")
+def collector_samples() -> list[Any]:
+    from telemetry.promtext import parse_file
+
+    return parse_file(FIXTURES / "collector-metrics.txt")
+
+
+@pytest.fixture(scope="session")
+def app_samples() -> list[Any]:
+    from telemetry.promtext import parse_file
+
+    return parse_file(FIXTURES / "app-metrics.txt")

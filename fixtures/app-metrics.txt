@@ -1,0 +1,34 @@
+# Saved from the gateway collector's prometheus exporter, :8889/metrics, which
+# is where the two services' OTLP metrics come out. Within budget: this is the
+# file CI runs scripts/check-budgets.py against.
+# HELP http_server_request_duration_seconds Duration of inbound HTTP requests
+# TYPE http_server_request_duration_seconds histogram
+http_server_request_duration_seconds_bucket{http_request_method="POST",http_route="/orders",service="checkout-api",status_class="2xx",le="0.005"} 0
+http_server_request_duration_seconds_bucket{http_request_method="POST",http_route="/orders",service="checkout-api",status_class="2xx",le="0.05"} 4120
+http_server_request_duration_seconds_bucket{http_request_method="POST",http_route="/orders",service="checkout-api",status_class="2xx",le="0.5"} 9911
+http_server_request_duration_seconds_bucket{http_request_method="POST",http_route="/orders",service="checkout-api",status_class="2xx",le="+Inf"} 9980
+http_server_request_duration_seconds_sum{http_request_method="POST",http_route="/orders",service="checkout-api",status_class="2xx"} 418.221
+http_server_request_duration_seconds_count{http_request_method="POST",http_route="/orders",service="checkout-api",status_class="2xx"} 9980
+http_server_request_duration_seconds_bucket{http_request_method="GET",http_route="/orders/:id",service="checkout-api",status_class="2xx",le="0.05"} 22104
+http_server_request_duration_seconds_bucket{http_request_method="GET",http_route="/orders/:id",service="checkout-api",status_class="2xx",le="+Inf"} 22410
+http_server_request_duration_seconds_sum{http_request_method="GET",http_route="/orders/:id",service="checkout-api",status_class="2xx"} 290.044
+http_server_request_duration_seconds_count{http_request_method="GET",http_route="/orders/:id",service="checkout-api",status_class="2xx"} 22410
+http_server_request_duration_seconds_bucket{http_request_method="GET",http_route="/orders/:id",service="checkout-api",status_class="5xx",le="+Inf"} 212
+http_server_request_duration_seconds_sum{http_request_method="GET",http_route="/orders/:id",service="checkout-api",status_class="5xx"} 44.9
+http_server_request_duration_seconds_count{http_request_method="GET",http_route="/orders/:id",service="checkout-api",status_class="5xx"} 212
+http_server_request_duration_seconds_bucket{http_request_method="GET",http_route="/healthz",service="checkout-api",status_class="2xx",le="+Inf"} 186200
+http_server_request_duration_seconds_sum{http_request_method="GET",http_route="/healthz",service="checkout-api",status_class="2xx"} 91.4
+http_server_request_duration_seconds_count{http_request_method="GET",http_route="/healthz",service="checkout-api",status_class="2xx"} 186200
+# HELP kafka_consumer_lag_records Records behind the end of the partition
+# TYPE kafka_consumer_lag_records gauge
+kafka_consumer_lag_records{partition="0",service="settlement-worker",topic="orders.placed"} 418
+kafka_consumer_lag_records{partition="1",service="settlement-worker",topic="orders.placed"} 2291
+kafka_consumer_lag_records{partition="2",service="settlement-worker",topic="orders.placed"} 77
+# HELP orders_settled_total Orders that reached a terminal settlement state
+# TYPE orders_settled_total counter
+orders_settled_total{payment_method="card",service="settlement-worker",settlement_status="settled"} 88214
+orders_settled_total{payment_method="card",service="settlement-worker",settlement_status="declined"} 4102
+orders_settled_total{payment_method="bank_transfer",service="settlement-worker",settlement_status="settled"} 9140
+orders_settled_total{payment_method="bank_transfer",service="settlement-worker",settlement_status="pending"} 311
+orders_settled_total{payment_method="wallet",service="settlement-worker",settlement_status="settled"} 20488
+orders_settled_total{payment_method="__over_budget__",service="__over_budget__",settlement_status="__over_budget__"} 0

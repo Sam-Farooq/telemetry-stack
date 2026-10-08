@@ -1,0 +1,16 @@
+# Saved from Prometheus itself, :9090/metrics. The series count and the
+# dropped-sample counters are what the cardinality panel reads.
+# HELP prometheus_tsdb_head_series Total number of series in the head block
+# TYPE prometheus_tsdb_head_series gauge
+prometheus_tsdb_head_series 48122
+# HELP prometheus_target_scrapes_exceeded_sample_limit_total Total number of scrapes that hit the sample limit and were rejected
+# TYPE prometheus_target_scrapes_exceeded_sample_limit_total counter
+prometheus_target_scrapes_exceeded_sample_limit_total 3
+# HELP prometheus_target_scrapes_sample_duplicate_timestamp_total Total number of samples rejected due to duplicate timestamps
+# TYPE prometheus_target_scrapes_sample_duplicate_timestamp_total counter
+prometheus_target_scrapes_sample_duplicate_timestamp_total 0
+# HELP scrape_samples_scraped The number of samples the target exposed
+# TYPE scrape_samples_scraped gauge
+scrape_samples_scraped{job="otel-gateway"} 184
+scrape_samples_scraped{job="otel-agent"} 121
+scrape_samples_scraped{job="app-metrics"} 46

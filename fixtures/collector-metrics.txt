@@ -1,0 +1,67 @@
+# Saved from the gateway collector's own telemetry endpoint, :8888/metrics,
+# during a local run of compose.yaml with scripts/loadgen.py. Trimmed to the
+# families the dashboards and the scripts read. Kept as a file so the queue
+# reader and the dashboard check have something to run against offline.
+# HELP otelcol_process_uptime Uptime of the process
+# TYPE otelcol_process_uptime counter
+otelcol_process_uptime{service_instance_id="8f2b1c44-6d01-4c2a-9c7e-1b2f3a4d5e6f",service_name="otelcol-contrib",service_version="0.109.0"} 1864.52
+# HELP otelcol_process_memory_rss Total physical memory
+# TYPE otelcol_process_memory_rss gauge
+otelcol_process_memory_rss{service_instance_id="8f2b1c44-6d01-4c2a-9c7e-1b2f3a4d5e6f",service_name="otelcol-contrib",service_version="0.109.0"} 4.0255488e+08
+# HELP otelcol_receiver_accepted_spans Number of spans successfully pushed into the pipeline
+# TYPE otelcol_receiver_accepted_spans counter
+otelcol_receiver_accepted_spans{receiver="otlp",transport="grpc"} 3.721044e+06
+otelcol_receiver_accepted_spans{receiver="otlp",transport="http"} 18422
+# HELP otelcol_receiver_refused_spans Number of spans that could not be pushed into the pipeline
+# TYPE otelcol_receiver_refused_spans counter
+otelcol_receiver_refused_spans{receiver="otlp",transport="grpc"} 41280
+otelcol_receiver_refused_spans{receiver="otlp",transport="http"} 0
+# HELP otelcol_receiver_accepted_log_records Number of log records pushed into the pipeline
+# TYPE otelcol_receiver_accepted_log_records counter
+otelcol_receiver_accepted_log_records{receiver="otlp",transport="grpc"} 912377
+# HELP otelcol_processor_batch_batch_send_size Number of units in the batch
+# TYPE otelcol_processor_batch_batch_send_size histogram
+otelcol_processor_batch_batch_send_size_bucket{processor="batch",le="512"} 118
+otelcol_processor_batch_batch_send_size_bucket{processor="batch",le="1024"} 904
+otelcol_processor_batch_batch_send_size_bucket{processor="batch",le="2048"} 3611
+otelcol_processor_batch_batch_send_size_bucket{processor="batch",le="+Inf"} 3611
+otelcol_processor_batch_batch_send_size_sum{processor="batch"} 6.95104e+06
+otelcol_processor_batch_batch_send_size_count{processor="batch"} 3611
+# HELP otelcol_processor_batch_timeout_trigger_send Number of times the batch was sent due to a timeout trigger
+# TYPE otelcol_processor_batch_timeout_trigger_send counter
+otelcol_processor_batch_timeout_trigger_send{processor="batch"} 2088
+# HELP otelcol_processor_tail_sampling_count_traces_sampled Count of traces that were sampled or not per sampling policy
+# TYPE otelcol_processor_tail_sampling_count_traces_sampled counter
+otelcol_processor_tail_sampling_count_traces_sampled{policy="errors",sampled="true"} 9142
+otelcol_processor_tail_sampling_count_traces_sampled{policy="slow",sampled="true"} 3077
+otelcol_processor_tail_sampling_count_traces_sampled{policy="sample-the-rest",sampled="true"} 48221
+otelcol_processor_tail_sampling_count_traces_sampled{policy="sample-the-rest",sampled="false"} 434009
+# HELP otelcol_processor_tail_sampling_sampling_trace_dropped_too_early Count of traces that needed to be dropped before the decision could be made
+# TYPE otelcol_processor_tail_sampling_sampling_trace_dropped_too_early counter
+otelcol_processor_tail_sampling_sampling_trace_dropped_too_early 1836
+# HELP otelcol_processor_tail_sampling_sampling_trace_removal_age Time (in seconds) from arrival of a new trace until its removal from memory
+# TYPE otelcol_processor_tail_sampling_sampling_trace_removal_age histogram
+otelcol_processor_tail_sampling_sampling_trace_removal_age_sum 5.04221e+06
+otelcol_processor_tail_sampling_sampling_trace_removal_age_count 494449
+# HELP otelcol_exporter_queue_size Current size of the retry queue (in batches)
+# TYPE otelcol_exporter_queue_size gauge
+otelcol_exporter_queue_size{data_type="traces",exporter="elasticsearch"} 196
+otelcol_exporter_queue_size{data_type="logs",exporter="elasticsearch/logs"} 12
+otelcol_exporter_queue_size{data_type="metrics",exporter="prometheus"} 0
+# HELP otelcol_exporter_queue_capacity Fixed capacity of the retry queue (in batches)
+# TYPE otelcol_exporter_queue_capacity gauge
+otelcol_exporter_queue_capacity{data_type="traces",exporter="elasticsearch"} 256
+otelcol_exporter_queue_capacity{data_type="logs",exporter="elasticsearch/logs"} 256
+otelcol_exporter_queue_capacity{data_type="metrics",exporter="prometheus"} 256
+# HELP otelcol_exporter_sent_spans Number of spans successfully sent to destination
+# TYPE otelcol_exporter_sent_spans counter
+otelcol_exporter_sent_spans{exporter="elasticsearch"} 1.284922e+06
+# HELP otelcol_exporter_send_failed_spans Number of spans in failed attempts to send to destination
+# TYPE otelcol_exporter_send_failed_spans counter
+otelcol_exporter_send_failed_spans{error="bulk indexer flush: 429 es_rejected_execution_exception, queue capacity {\"limit\":1000}",exporter="elasticsearch"} 20480
+# HELP otelcol_exporter_enqueue_failed_spans Number of spans failed to be added to the sending queue
+# TYPE otelcol_exporter_enqueue_failed_spans counter
+otelcol_exporter_enqueue_failed_spans{data_type="traces",exporter="elasticsearch"} 61440
+# HELP otelcol_exporter_enqueue_failed_log_records Number of log records failed to be added to the sending queue
+# TYPE otelcol_exporter_enqueue_failed_log_records counter
+otelcol_exporter_enqueue_failed_log_records{data_type="logs",exporter="elasticsearch/logs"} 0
