@@ -12,6 +12,7 @@ emit: escaped label values, +Inf and NaN, optional trailing timestamps.
 
 from __future__ import annotations
 
+import sys
 from collections.abc import Iterable, Iterator, Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -118,6 +119,23 @@ def parse(text: str) -> list[Sample]:
 
 def parse_file(path: Path | str) -> list[Sample]:
     return parse(Path(path).read_text(encoding="utf-8"))
+
+
+def read_exposition(source: str, timeout: float = 5.0) -> str:
+    """Text from a file, a URL, or `-` for stdin.
+
+    The scripts take the same argument so a saved scrape and a live endpoint
+    are interchangeable: the file is how CI runs them, the URL is how a person
+    does, and the output is identical.
+    """
+    if source == "-":
+        return sys.stdin.read()
+    if source.startswith(("http://", "https://")):
+        from urllib.request import urlopen
+
+        with urlopen(source, timeout=timeout) as response:  # noqa: S310 - fixed schemes
+            return str(response.read().decode("utf-8"))
+    return Path(source).read_text(encoding="utf-8")
 
 
 def base_name(name: str) -> str:

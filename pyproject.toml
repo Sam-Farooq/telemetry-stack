@@ -4,8 +4,11 @@ version = "0.4.0"
 description = "OTLP agent and gateway collectors into Elasticsearch, Prometheus and Grafana"
 requires-python = ">=3.11"
 dependencies = [
-    "opentelemetry-sdk>=1.27.0",
-    "opentelemetry-exporter-otlp-proto-grpc>=1.27.0",
+    # 1.45 is the floor, not a preference: Logger.emit takes the record fields
+    # as keyword arguments from there, and the older form needs the SDK's
+    # private LogRecord class.
+    "opentelemetry-sdk>=1.45.0",
+    "opentelemetry-exporter-otlp-proto-grpc>=1.45.0",
     "confluent-kafka>=2.5.0",
 ]
 

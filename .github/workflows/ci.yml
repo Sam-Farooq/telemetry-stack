@@ -1,0 +1,60 @@
+name: ci
+
+on:
+  push: {branches: [main]}
+  pull_request:
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.11", cache: pip}
+      - run: pip install -e ".[dev]"
+      - run: ruff check telemetry services scripts tests
+      - run: pytest -q
+      # The scripts run against the recorded scrapes in fixtures/, so CI
+      # exercises the operational tooling and not only the library.
+      - run: python scripts/check-budgets.py --source fixtures/app-metrics.txt
+      - run: python scripts/collector-health.py --source fixtures/collector-metrics.txt --exit-zero
+      - run: python scripts/tail-sample-report.py
+      - run: bash -n scripts/bootstrap-elasticsearch.sh
+
+  configs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.11"}
+      # otelcol validates its own config without starting a pipeline. This is
+      # the only check here that knows what a processor is called, so it is
+      # worth the container pull.
+      - name: validate the collector configs
+        run: |
+          for tier in agent gateway; do
+            docker run --rm -v "$PWD/collector:/conf:ro" \
+              -e ELASTICSEARCH_URL=http://elasticsearch:9200 \
+              -e GATEWAY_DNS_NAME=otel-gateway \
+              otel/opentelemetry-collector-contrib:0.119.0 \
+              validate --config=/conf/$tier.yaml
+          done
+      - name: promtool check the scrape config and the rules
+        run: |
+          docker run --rm -v "$PWD/prometheus:/p:ro" --entrypoint promtool \
+            prom/prometheus:v2.54.1 check config /p/prometheus.yml
+      - run: docker compose -f compose.yaml config --quiet
+
+  chart:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-helm@v4
+      - run: |
+          helm lint ./helm \
+            --set-file agentConfig=collector/agent.yaml \
+            --set-file gatewayConfig=collector/gateway.yaml
+      - run: |
+          helm template telemetry ./helm \
+            --set-file agentConfig=collector/agent.yaml \
+            --set-file gatewayConfig=collector/gateway.yaml > /dev/null
