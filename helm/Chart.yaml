@@ -2,5 +2,7 @@ apiVersion: v2
 name: telemetry-stack
 description: Agent and gateway collector tiers, with the configs passed in rather than copied
 type: application
-version: 0.4.0
+# Kept equal to the version in pyproject.toml, because the chart ships these
+# exact configs. appVersion is the collector image the pods run.
+version: 0.5.3
 appVersion: "0.119.0"

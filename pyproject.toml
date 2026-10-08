@@ -1,6 +1,11 @@
 [project]
 name = "telemetry-stack"
-version = "0.4.0"
+# This repo's own number. It is not the collector's: collector/ pins
+# opentelemetry-collector-contrib 0.119.0, which moves on its own schedule and
+# is what helm/Chart.yaml carries as appVersion. Still pre-1.0 because the
+# Elasticsearch exporter's otel mapping mode renames fields between collector
+# releases, so elasticsearch/template-traces.json is not settled.
+version = "0.5.3"
 description = "OTLP agent and gateway collectors into Elasticsearch, Prometheus and Grafana"
 requires-python = ">=3.11"
 dependencies = [

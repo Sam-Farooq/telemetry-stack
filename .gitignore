@@ -6,10 +6,8 @@ __pycache__/
 .ruff_cache/
 *.egg-info/
 .DS_Store
-# written by scripts/collector-health.py --save and scripts/smoke.sh
-out/
+# exposition saved by hand for a script to read, e.g.
+#   curl -s localhost:8888/metrics > gateway.metrics.txt
 *.metrics.txt
-# collector persistent sending queue, bind-mounted by compose.yaml
-collector/queue/
 # elasticsearch data volume when it is bound instead of named
 esdata/
