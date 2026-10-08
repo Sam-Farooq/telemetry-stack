@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-agent
+  labels:
+    app.kubernetes.io/name: telemetry-stack
+    app.kubernetes.io/component: agent
+data:
+  agent.yaml: |
+{{ required "agentConfig is empty: install with --set-file agentConfig=collector/agent.yaml" .Values.agentConfig | indent 4 }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-gateway
+  labels:
+    app.kubernetes.io/name: telemetry-stack
+    app.kubernetes.io/component: gateway
+data:
+  gateway.yaml: |
+{{ required "gatewayConfig is empty: install with --set-file gatewayConfig=collector/gateway.yaml" .Values.gatewayConfig | indent 4 }}

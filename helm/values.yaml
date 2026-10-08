@@ -1,0 +1,44 @@
+# The collector configs are not duplicated in this chart. Install with:
+#
+#   helm install telemetry ./helm \
+#     --set-file agentConfig=collector/agent.yaml \
+#     --set-file gatewayConfig=collector/gateway.yaml
+#
+# so that the file compose runs and the file Kubernetes runs are the same file.
+agentConfig: ""
+gatewayConfig: ""
+
+image:
+  repository: otel/opentelemetry-collector-contrib
+  tag: 0.119.0
+  pullPolicy: IfNotPresent
+
+elasticsearchUrl: http://elasticsearch-master:9200
+
+agent:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 192Mi
+    limits:
+      # Above memory_limiter's limit_mib of 256 plus its 64 MiB spike budget.
+      # A container limit at or below the limiter's means the kernel kills the
+      # process before the limiter ever gets to refuse anything.
+      memory: 384Mi
+
+gateway:
+  replicas: 3
+  resources:
+    requests:
+      cpu: 500m
+      memory: 640Mi
+    limits:
+      # memory_limiter is 512 MiB with a 128 MiB spike budget.
+      memory: 768Mi
+  # The agent resolves gateway pods by DNS and routes by trace id, so losing a
+  # replica reshuffles which gateway owns which trace. Two at a time would
+  # reshuffle twice.
+  maxUnavailable: 1
+  queue:
+    storageClass: ""
+    size: 2Gi
