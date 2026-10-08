@@ -112,6 +112,9 @@ services:
       KAFKA_BOOTSTRAP: kafka:9092
       ORDERS_TOPIC: orders.placed
       REQUESTS_PER_SECOND: "40"
+    # Published because scripts/loadgen.py runs on the host and posts here.
+    # It is the only service port a person has a reason to open.
+    ports: ["8080:8080"]
     depends_on:
       kafka:
         condition: service_healthy

@@ -182,9 +182,10 @@ python scripts/loadgen.py --rate 40 --seconds 120
 ```
 
 Grafana is on `localhost:3000` (anonymous, admin), Prometheus on `9090`,
-Elasticsearch on `9200`, and the gateway's re-exported app metrics on `8889`.
-`compose.yaml` publishes nothing else: the OTLP ports are internal, because
-nothing outside the network sends OTLP.
+Elasticsearch on `9200`, the gateway's re-exported app metrics on `8889`, and
+checkout-api on `8080`, which is there because `loadgen.py` runs on the host
+and posts to it. `compose.yaml` publishes nothing else: the OTLP ports stay
+internal, because nothing outside the network sends OTLP.
 
 On Kubernetes the chart takes the same two config files rather than keeping a
 copy:

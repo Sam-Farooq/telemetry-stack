@@ -143,6 +143,15 @@ def test_only_the_ports_a_person_opens_are_published(compose: dict[str, Any]) ->
         for name, service in compose["services"].items()
         if service.get("ports")
     }
-    assert set(published) == {"elasticsearch", "otel-gateway", "prometheus", "grafana"}
+    # checkout-api is in here because scripts/loadgen.py posts to it from the
+    # host, which is what the README tells a person to do.
+    assert set(published) == {
+        "elasticsearch",
+        "otel-gateway",
+        "prometheus",
+        "grafana",
+        "checkout-api",
+    }
+    assert "8080:8080" in compose["services"]["checkout-api"]["ports"]
     # 4317 is not published: nothing outside the compose network sends OTLP.
     assert all("4317" not in str(ports) for ports in published.values())
