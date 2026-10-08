@@ -106,11 +106,16 @@ exporters:
       # reach: the limiter would trip first and the queue number was decoration.
       queue_size: 256
       storage: file_storage
-    retry_on_failure:
+    # `retry`, not `retry_on_failure`. The Elasticsearch exporter defines its own
+    # retry block and rejects the standard one outright, and it counts retries
+    # rather than taking a time budget. 8 retries at 1s doubling to a 30s ceiling
+    # is 1+2+4+8+16+30+30+30, so about 121 seconds, which is the budget this
+    # replaced.
+    retry:
       enabled: true
       initial_interval: 1s
       max_interval: 30s
-      max_elapsed_time: 120s
+      max_retries: 8
 
   elasticsearch/logs:
     endpoints: ["${env:ELASTICSEARCH_URL}"]
@@ -122,11 +127,16 @@ exporters:
       enabled: true
       queue_size: 256
       storage: file_storage
-    retry_on_failure:
+    # `retry`, not `retry_on_failure`. The Elasticsearch exporter defines its own
+    # retry block and rejects the standard one outright, and it counts retries
+    # rather than taking a time budget. 8 retries at 1s doubling to a 30s ceiling
+    # is 1+2+4+8+16+30+30+30, so about 121 seconds, which is the budget this
+    # replaced.
+    retry:
       enabled: true
       initial_interval: 1s
       max_interval: 30s
-      max_elapsed_time: 120s
+      max_retries: 8
 
   prometheus:
     endpoint: 0.0.0.0:8889

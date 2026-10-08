@@ -160,14 +160,19 @@ def test_the_elasticsearch_queue_is_bounded_durable_and_gives_up(
     gateway = configs["gateway.yaml"]
     spec = gateway["exporters"][exporter]
     queue = spec["sending_queue"]
-    retry = spec["retry_on_failure"]
+    # The Elasticsearch exporter declares `retry`, not the standard
+    # `retry_on_failure`, and otelcol refuses the latter as an invalid key.
+    assert "retry_on_failure" not in spec, "the Elasticsearch exporter rejects this key"
+    retry = spec["retry"]
 
     assert queue["enabled"] is True
     assert queue["storage"] == "file_storage"
     assert "file_storage" in gateway["service"]["extensions"]
     assert retry["enabled"] is True
-    # A retry that never gives up is a queue that never drains.
-    assert 0 < int(str(retry["max_elapsed_time"]).removesuffix("s")) <= 300
+    # A retry that never gives up is a queue that never drains. This exporter
+    # counts retries instead of taking a time budget, so the bound is a count:
+    # 8 retries at 1s doubling to a 30s ceiling is about 121 seconds.
+    assert 0 < retry["max_retries"] <= 10
 
     batch_max = gateway["processors"]["batch"]["send_batch_max_size"]
     held = resident_items(queue["queue_size"], batch_max)
