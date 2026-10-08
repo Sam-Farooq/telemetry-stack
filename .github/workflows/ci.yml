@@ -39,10 +39,13 @@ jobs:
               otel/opentelemetry-collector-contrib:0.119.0 \
               validate --config=/conf/$tier.yaml
           done
+      # Mounted at /etc/prometheus, not somewhere arbitrary: rule_files is an
+      # absolute path, so promtool only finds the rules if the layout matches
+      # the one the container runs with.
       - name: promtool check the scrape config and the rules
         run: |
-          docker run --rm -v "$PWD/prometheus:/p:ro" --entrypoint promtool \
-            prom/prometheus:v2.54.1 check config /p/prometheus.yml
+          docker run --rm -v "$PWD/prometheus:/etc/prometheus:ro" --entrypoint promtool \
+            prom/prometheus:v2.54.1 check config /etc/prometheus/prometheus.yml
       - run: docker compose -f compose.yaml config --quiet
 
   chart:
