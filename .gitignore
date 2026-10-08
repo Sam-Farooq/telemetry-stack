@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+.venv/
+.env
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+.DS_Store
+# written by scripts/collector-health.py --save and scripts/smoke.sh
+out/
+*.metrics.txt
+# collector persistent sending queue, bind-mounted by compose.yaml
+collector/queue/
+# elasticsearch data volume when it is bound instead of named
+esdata/

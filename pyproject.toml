@@ -1,0 +1,37 @@
+[project]
+name = "telemetry-stack"
+version = "0.4.0"
+description = "OTLP agent and gateway collectors into Elasticsearch, Prometheus and Grafana"
+requires-python = ">=3.11"
+dependencies = [
+    "opentelemetry-sdk>=1.27.0",
+    "opentelemetry-exporter-otlp-proto-grpc>=1.27.0",
+    "confluent-kafka>=2.5.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==9.1.1",
+    "ruff==0.16.10",
+    # test-only: the config assertions in tests/ parse the collector, compose,
+    # prometheus and helm YAML. Nothing at runtime reads YAML.
+    "pyyaml==6.0.2",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["telemetry"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
