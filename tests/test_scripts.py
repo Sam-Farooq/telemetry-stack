@@ -1,7 +1,8 @@
-"""The operational scripts, run as the shell runs them, against saved scrapes.
+"""The operational scripts, run as the shell runs them, against the fixtures.
 
 No service is started and nothing is fetched: every script takes --source, so
-a recorded file stands in for the endpoint and the exit codes are the contract.
+a file stands in for the endpoint and the exit codes are the contract. The
+fixtures are hand-authored, not captured; fixtures/README.md says how.
 """
 
 from __future__ import annotations
@@ -27,7 +28,7 @@ def run(repo_root: Path, script: str, *args: str) -> subprocess.CompletedProcess
     )
 
 
-def test_check_budgets_passes_on_the_recorded_scrape(repo_root: Path) -> None:
+def test_check_budgets_passes_on_the_app_metrics_fixture(repo_root: Path) -> None:
     result = run(repo_root, "check-budgets.py", "--source", "fixtures/app-metrics.txt")
     assert result.returncode == 0, result.stderr
     assert "4 budgets" in result.stdout

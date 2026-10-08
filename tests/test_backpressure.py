@@ -27,7 +27,7 @@ def q(**kw: float | str) -> QueueState:
     return QueueState(**base)  # type: ignore[arg-type]
 
 
-def test_the_recorded_scrape_shows_the_gateway_dropping(
+def test_the_fixture_shows_the_gateway_dropping(
     collector_samples: list[Sample],
 ) -> None:
     states = {(s.exporter, s.data_type): s for s in read_queue_states(collector_samples)}

@@ -1,13 +1,17 @@
-# Saved from the gateway collector's own telemetry endpoint, :8888/metrics,
-# during a local run of compose.yaml with scripts/loadgen.py. Trimmed to the
-# families the dashboards and the scripts read. Kept as a file so the queue
+# Synthetic. Hand-authored, not scraped: nothing in this repo has run against
+# a collector. This is the exposition a gateway would print on :8888/metrics
+# while Elasticsearch is refusing bulk writes, kept as a file so the queue
 # reader and the dashboard check have something to run against offline.
+#
+# The metric names, types and label keys are the collector's own. The values
+# are chosen so that elasticsearch/traces reads as dropping with its queue at
+# 196 of 256, and elasticsearch/logs and prometheus read as healthy.
 # HELP otelcol_process_uptime Uptime of the process
 # TYPE otelcol_process_uptime counter
-otelcol_process_uptime{service_instance_id="8f2b1c44-6d01-4c2a-9c7e-1b2f3a4d5e6f",service_name="otelcol-contrib",service_version="0.109.0"} 1864.52
+otelcol_process_uptime{service_instance_id="31bedba3-53ea-4887-821f-24946bf9afef",service_name="otelcol-contrib",service_version="0.119.0"} 1864.52
 # HELP otelcol_process_memory_rss Total physical memory
 # TYPE otelcol_process_memory_rss gauge
-otelcol_process_memory_rss{service_instance_id="8f2b1c44-6d01-4c2a-9c7e-1b2f3a4d5e6f",service_name="otelcol-contrib",service_version="0.109.0"} 4.0255488e+08
+otelcol_process_memory_rss{service_instance_id="31bedba3-53ea-4887-821f-24946bf9afef",service_name="otelcol-contrib",service_version="0.119.0"} 4.0255488e+08
 # HELP otelcol_receiver_accepted_spans Number of spans successfully pushed into the pipeline
 # TYPE otelcol_receiver_accepted_spans counter
 otelcol_receiver_accepted_spans{receiver="otlp",transport="grpc"} 3.721044e+06

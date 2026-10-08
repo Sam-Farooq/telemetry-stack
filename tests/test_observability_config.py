@@ -2,8 +2,9 @@
 
 The check worth having here is the boring one: every metric a panel or an
 alert names has to be a metric something in this stack actually emits. The
-fixtures in fixtures/ are recorded scrapes, so they answer that question
-without Prometheus running. A panel that queries a metric nobody produces
+exposition fixtures in fixtures/ are hand-authored, not captured: they are
+the declared list of what this stack emits, which is what lets the check run
+with no Prometheus. A panel that queries a metric nobody produces
 renders an empty graph, and an empty graph is read as "nothing is wrong".
 """
 

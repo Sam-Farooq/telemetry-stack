@@ -1,5 +1,8 @@
-# Saved from Prometheus itself, :9090/metrics. The series count and the
-# dropped-sample counters are what the cardinality panel reads.
+# Synthetic. Hand-authored, not scraped; Prometheus has never run here. Four
+# families off :9090/metrics: the three the cardinality dashboard and the
+# alert rules query, so the panel check in tests/ has names to match against,
+# plus the duplicate-timestamp counter, which is the other way a scrape loses
+# samples and is worth reading next to the sample limit.
 # HELP prometheus_tsdb_head_series Total number of series in the head block
 # TYPE prometheus_tsdb_head_series gauge
 prometheus_tsdb_head_series 48122

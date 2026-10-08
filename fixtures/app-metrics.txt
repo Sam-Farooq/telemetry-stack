@@ -1,6 +1,7 @@
-# Saved from the gateway collector's prometheus exporter, :8889/metrics, which
-# is where the two services' OTLP metrics come out. Within budget: this is the
-# file CI runs scripts/check-budgets.py against.
+# Synthetic. Hand-authored, not scraped. The shape the gateway's prometheus
+# exporter puts on :8889, which is where the two services' OTLP metrics come
+# out. Written to sit inside prometheus/label-budgets.json, because the
+# passing case is the one CI asserts with scripts/check-budgets.py.
 # HELP http_server_request_duration_seconds Duration of inbound HTTP requests
 # TYPE http_server_request_duration_seconds histogram
 http_server_request_duration_seconds_bucket{http_request_method="POST",http_route="/orders",service="checkout-api",status_class="2xx",le="0.005"} 0

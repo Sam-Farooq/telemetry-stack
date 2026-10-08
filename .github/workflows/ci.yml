@@ -14,8 +14,8 @@ jobs:
       - run: pip install -e ".[dev]"
       - run: ruff check telemetry services scripts tests
       - run: pytest -q
-      # The scripts run against the recorded scrapes in fixtures/, so CI
-      # exercises the operational tooling and not only the library.
+      # The scripts run against the hand-authored fixtures, so CI exercises
+      # the operational tooling and not only the library.
       - run: python scripts/check-budgets.py --source fixtures/app-metrics.txt
       - run: python scripts/collector-health.py --source fixtures/collector-metrics.txt --exit-zero
       - run: python scripts/tail-sample-report.py

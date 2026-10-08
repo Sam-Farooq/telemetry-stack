@@ -44,8 +44,9 @@ Head sampling decides at the root span, before the request has failed or run
 long. Tail sampling decides when the trace is complete, and pays for it in
 memory: the gateway holds every open trace for `decision_wait`.
 
-`fixtures/traces.jsonl` is 600 recorded traces. `scripts/tail-sample-report.py`
-runs the shipped policy over them:
+`fixtures/traces.jsonl` is 600 synthetic traces, written rather than captured;
+`fixtures/README.md` says how. `scripts/tail-sample-report.py` runs the
+shipped policy over them:
 
 ```
 traces      600
@@ -117,8 +118,8 @@ otelcol_exporter_enqueue_failed_spans  refused by a full queue, data is gone
 Only the third is loss. Nothing alerts on the second, because paging on a 429
 that the retry absorbs teaches people to ignore the alert.
 
-`fixtures/collector-metrics.txt` is a scrape from a run where this was
-happening. `scripts/collector-health.py` reads it:
+`fixtures/collector-metrics.txt` is a hand-authored exposition of that state,
+not a capture of one. `scripts/collector-health.py` reads it:
 
 ```
 elasticsearch/traces: 196 of 256 batches (77%), status dropping, 61440 items refused by a full queue
@@ -213,9 +214,9 @@ way code is. The checks worth knowing about:
   collector with a quietly shorter pipeline.
 - The sampling numbers in `gateway.yaml` have to equal the numbers in
   `telemetry/sampling.py`. Two copies of a policy drift; a test makes them one.
-- Every metric a dashboard panel or an alert rule queries has to appear in a
-  recorded scrape under `fixtures/`. A panel querying a metric nobody emits
-  renders an empty graph, and an empty graph reads as good news.
+- Every metric a dashboard panel or an alert rule queries has to appear in one
+  of the exposition fixtures under `fixtures/`. A panel querying a metric
+  nobody emits renders an empty graph, and an empty graph reads as good news.
 - Every bind mount in `compose.yaml` has to exist, and every `${env:...}` the
   collector configs expand has to be set on that service.
 - Every field `to_es_document` can emit has to be mapped in the logs template,
@@ -223,9 +224,10 @@ way code is. The checks worth knowing about:
 
 `scripts/check-budgets.py`, `scripts/collector-health.py` and
 `scripts/tail-sample-report.py` each take `--source`, so CI runs them against
-the saved scrapes and the exit codes are part of the suite. The second CI job
-runs `otelcol validate` and `promtool check config` in containers, which is the
-only place anything knows what a processor is actually called.
+the fixtures and the exit codes are part of the suite. The second CI job runs
+`otelcol validate` and `promtool check config` in containers, plus
+`docker compose config` on the runner. Those containers are the only place
+anything knows what a processor is actually called.
 
 ## What this does not do
 
@@ -240,7 +242,12 @@ only place anything knows what a processor is actually called.
   service graph and no dependency map.
 - No alertmanager, so the rules in `prometheus/rules/` evaluate and route
   nowhere. They are checked by `promtool` and read by a person.
-- Nothing here has run anywhere but a laptop. The numbers in this README are
-  arithmetic from the configuration, or output from the fixtures in
-  `fixtures/`, and the fixtures are recorded scrapes from a local compose run.
-  There is no production in this repo to measure.
+- Nothing here has been run against a running stack. The Python is tested
+  locally; the collector, Prometheus, Elasticsearch and Kubernetes paths go
+  no further than the two CI jobs, and `otelcol validate`, `promtool`,
+  `docker compose config`, `helm lint` and `helm template` all read a config
+  without starting a pipeline. Every number in this README is either
+  arithmetic from the configuration or a script's output over `fixtures/`,
+  and the fixtures are hand-authored rather than captured, which
+  `fixtures/README.md` sets out file by file. There is no production here to
+  measure.
