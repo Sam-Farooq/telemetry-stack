@@ -1,0 +1,89 @@
+# Agent tier. One per host in Kubernetes (DaemonSet), one container in compose.
+# It receives OTLP from the services next to it, adds host identity, and
+# forwards. It makes no sampling decision: an agent sees the spans produced on
+# its own node, which is a fragment of a trace, and a tail decision taken on a
+# fragment is worse than no decision at all.
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+        max_recv_msg_size_mib: 8
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  # First, always. Once the process is over its limit the limiter refuses new
+  # data at the receiver, which makes the SDK's exporter retry and keeps the
+  # loss on the producer side where it is visible, instead of inside a queue.
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 256
+    spike_limit_mib: 64
+
+  resourcedetection:
+    detectors: [env, system]
+    system:
+      hostname_sources: [os]
+    timeout: 2s
+
+  # Last, always. Batching before the limiter has run means the limiter is
+  # deciding about memory that has already been allocated.
+  batch:
+    timeout: 1s
+    send_batch_size: 1024
+    send_batch_max_size: 2048
+
+exporters:
+  # Traces and logs go through the load balancer keyed by trace id, so every
+  # span of a trace reaches the same gateway replica. Without this the gateway
+  # tail sampler sees partial traces and drops them as incomplete.
+  loadbalancing:
+    routing_key: traceID
+    protocol:
+      otlp:
+        tls:
+          insecure: true
+        sending_queue:
+          enabled: true
+          queue_size: 64
+    resolver:
+      dns:
+        hostname: otel-gateway
+        port: 4317
+
+  # Metrics have no trace id to route on, so they skip the load balancer.
+  otlp/gateway:
+    endpoint: otel-gateway:4317
+    tls:
+      insecure: true
+    sending_queue:
+      enabled: true
+      queue_size: 64
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+service:
+  extensions: [health_check]
+  telemetry:
+    metrics:
+      level: normal
+      address: 0.0.0.0:8888
+    logs:
+      level: info
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, resourcedetection, batch]
+      exporters: [loadbalancing]
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, resourcedetection, batch]
+      exporters: [loadbalancing]
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, resourcedetection, batch]
+      exporters: [otlp/gateway]

@@ -1,0 +1,162 @@
+# Gateway tier. Holds whole traces, decides what to keep, writes to
+# Elasticsearch and exposes the metrics Prometheus scrapes.
+#
+# The sampling policies here are the same decision as telemetry/sampling.py,
+# and tests/test_collector_config.py compares the two numbers so they cannot
+# drift apart silently.
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+        max_recv_msg_size_mib: 16
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 512
+    spike_limit_mib: 128
+
+  # Route templates arrive raw often enough to matter, and a raw path is an
+  # unbounded label. The same substitution lives in telemetry/cardinality.py
+  # for the metrics the services emit themselves.
+  transform/route:
+    error_mode: ignore
+    trace_statements:
+      - context: span
+        statements:
+          - replace_pattern(attributes["http.route"], "/[0-9]+", "/:id")
+          - replace_pattern(attributes["http.route"], "/[0-9a-fA-F]{32}", "/:id")
+          - replace_pattern(
+              attributes["http.route"],
+              "/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}",
+              "/:id")
+          - delete_key(attributes, "customer.id")
+          - delete_key(attributes, "http.target")
+
+  # DEBUG never reaches Elasticsearch. Turning it on is a config change here,
+  # not a redeploy of every service.
+  filter/logs:
+    error_mode: ignore
+    logs:
+      log_record:
+        - severity_number < SEVERITY_NUMBER_INFO
+
+  tail_sampling:
+    # The window the gateway holds a trace open for. Everything that arrives
+    # later than this is already a decided trace.
+    decision_wait: 10s
+    # Capacity in traces. It has to cover expected_new_traces_per_sec times
+    # decision_wait, or traces are evicted before their window closes and show
+    # up in otelcol_processor_tail_sampling_sampling_trace_dropped_too_early.
+    num_traces: 50000
+    expected_new_traces_per_sec: 2000
+    policies:
+      - name: errors
+        type: status_code
+        status_code:
+          status_codes: [ERROR]
+      - name: server-errors
+        type: numeric_attribute
+        numeric_attribute:
+          key: http.response.status_code
+          min_value: 500
+          max_value: 599
+      - name: slow
+        type: latency
+        latency:
+          threshold_ms: 500
+      # Everything else: one trace in ten, and none of the successful probes.
+      # A failing probe is already kept by the two policies above.
+      - name: sample-the-rest
+        type: and
+        and:
+          and_sub_policy:
+            - name: not-a-health-route
+              type: string_attribute
+              string_attribute:
+                key: http.route
+                values: [/healthz, /metrics, /readyz]
+                invert_match: true
+            - name: one-in-ten
+              type: probabilistic
+              probabilistic:
+                sampling_percentage: 10
+
+  batch:
+    timeout: 5s
+    send_batch_size: 1024
+    send_batch_max_size: 2048
+
+exporters:
+  elasticsearch:
+    endpoints: ["${env:ELASTICSEARCH_URL}"]
+    traces_index: traces-otel-write
+    mapping:
+      mode: ecs
+    num_workers: 4
+    sending_queue:
+      enabled: true
+      queue_size: 10000
+      storage: file_storage
+    retry_on_failure:
+      enabled: true
+      initial_interval: 1s
+      max_interval: 30s
+      max_elapsed_time: 120s
+
+  elasticsearch/logs:
+    endpoints: ["${env:ELASTICSEARCH_URL}"]
+    logs_index: logs-otel-write
+    mapping:
+      mode: ecs
+    num_workers: 2
+    sending_queue:
+      enabled: true
+      queue_size: 256
+      storage: file_storage
+    retry_on_failure:
+      enabled: true
+      initial_interval: 1s
+      max_interval: 30s
+      max_elapsed_time: 120s
+
+  prometheus:
+    endpoint: 0.0.0.0:8889
+    resource_to_telemetry_conversion:
+      enabled: false
+    enable_open_metrics: true
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+  # The sending queue is written to disk, so a gateway restart does not throw
+  # away what Elasticsearch has not accepted yet. It costs a write per batch.
+  file_storage:
+    directory: /var/lib/otelcol/queue
+    timeout: 1s
+
+service:
+  extensions: [health_check, file_storage]
+  telemetry:
+    metrics:
+      level: normal
+      address: 0.0.0.0:8888
+    logs:
+      level: info
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, transform/route, tail_sampling, batch]
+      exporters: [elasticsearch]
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, filter/logs, batch]
+      exporters: [elasticsearch/logs]
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [prometheus]
