@@ -59,8 +59,10 @@ errors      26, all kept by the error policy
 head at 10% would lose 22 of those 26
 ```
 
-Same keep rate, four of the 26 failures kept instead of all 26. That is the
-argument, and it is the only reason the gateway exists.
+The probabilistic branch is the same one in ten. Head sampling at one in ten
+keeps four of those 26 failures; the tail policy keeps all 26 and pays 4.83
+points of extra keep rate for it. That is the argument, and it is the only
+reason the gateway exists.
 
 The cost is arithmetic, not opinion. `decision_wait: 10s` at the configured
 `expected_new_traces_per_sec: 2000` is 20,000 traces open at once, which is why
