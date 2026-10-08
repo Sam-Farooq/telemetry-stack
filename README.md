@@ -208,7 +208,7 @@ pytest -q
 ruff check telemetry services scripts tests
 ```
 
-187 tests, none of which start a service. The processing logic is pure, so it
+188 tests, none of which start a service. The processing logic is pure, so it
 is tested directly; the configuration is read with PyYAML and asserted the same
 way code is. The checks worth knowing about:
 

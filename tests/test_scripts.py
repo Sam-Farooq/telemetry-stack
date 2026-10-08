@@ -183,7 +183,10 @@ def test_the_bootstrap_script_installs_the_policies_the_repo_declares(repo_root:
         assert name in script
 
 
-@pytest.mark.parametrize("script", ["check-budgets.py", "collector-health.py", "loadgen.py"])
+@pytest.mark.parametrize(
+    "script",
+    ["check-budgets.py", "collector-health.py", "loadgen.py", "tail-sample-report.py"],
+)
 def test_every_script_documents_itself(repo_root: Path, script: str) -> None:
     result = run(repo_root, script, "--help")
     assert result.returncode == 0

@@ -18,7 +18,7 @@ jobs:
       # the operational tooling and not only the library.
       - run: python scripts/check-budgets.py --source fixtures/app-metrics.txt
       - run: python scripts/collector-health.py --source fixtures/collector-metrics.txt --exit-zero
-      - run: python scripts/tail-sample-report.py
+      - run: python scripts/tail-sample-report.py --source fixtures/traces.jsonl
       - run: bash -n scripts/bootstrap-elasticsearch.sh
 
   configs:

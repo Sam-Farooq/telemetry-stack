@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
-"""Run the sampling policy over recorded traces and print what it keeps.
+"""Run the sampling policy over the saved traces and print what it keeps.
 
-    scripts/tail-sample-report.py
+    scripts/tail-sample-report.py                                 # the fixture
+    scripts/tail-sample-report.py --source fixtures/traces.jsonl
     scripts/tail-sample-report.py --percentage 5 --latency-ms 250
 
-The last two lines are the argument for tail sampling: the same keep rate at
+--source is the flag check-budgets.py and collector-health.py also take, the
+file to read, and here there is no endpoint to fall back to: a finished trace
+is not something a collector exposes.
+
+The last two lines are the argument for tail sampling: the same percentage at
 the head loses most of the failures, because the root span is decided before
 anything has gone wrong.
 """
@@ -50,15 +55,27 @@ def load(path: Path) -> list[Trace]:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--traces", default=str(DEFAULT_TRACES))
-    parser.add_argument("--percentage", type=float, default=DEFAULT_POLICY.probabilistic_percentage)
-    parser.add_argument("--latency-ms", type=float, default=DEFAULT_POLICY.latency_ms)
+    parser.add_argument(
+        "--source", default=str(DEFAULT_TRACES), help="a jsonl file of finished traces"
+    )
+    parser.add_argument(
+        "--percentage",
+        type=float,
+        default=DEFAULT_POLICY.probabilistic_percentage,
+        help="the probabilistic policy's keep rate",
+    )
+    parser.add_argument(
+        "--latency-ms",
+        type=float,
+        default=DEFAULT_POLICY.latency_ms,
+        help="the latency policy's threshold",
+    )
     args = parser.parse_args(argv)
 
     policy = Policy(latency_ms=args.latency_ms, probabilistic_percentage=args.percentage)
-    traces = load(Path(args.traces))
+    traces = load(Path(args.source))
     if not traces:
-        print(f"no traces in {args.traces}", file=sys.stderr)
+        print(f"no traces in {args.source}", file=sys.stderr)
         return 1
 
     kept = [t for t in traces if decide(t, policy).keep]
