@@ -10,7 +10,7 @@ scripts in `scripts/` can be tested and run with nothing up.
 | `collector-metrics.txt` | the gateway's own telemetry on `:8888/metrics` | names, types and label keys copied from the collector's exposition; values picked so `elasticsearch/traces` reads as dropping at 196 of 256 batches and the other two exporters read as healthy |
 | `app-metrics.txt` | the gateway's prometheus exporter on `:8889` | a histogram, a gauge and a counter, with label sets kept inside `prometheus/label-budgets.json` so the passing case is the one CI asserts |
 | `prometheus-metrics.txt` | Prometheus' own `:9090/metrics` | four families: the three the cardinality dashboard and the alert rules query, plus the duplicate-timestamp counter |
-| `traces.jsonl` | 600 finished traces, one JSON object per line | random trace ids, 6187 spans across six routes of `checkout-api`, 26 failures (4.33 percent, split across 500, 503 and 504) and 18 traces at or over 300ms (3.00 percent) |
+| `traces.jsonl` | 600 finished traces, one JSON object per line | random trace ids, 6187 spans across six routes of `checkout-api`, 26 failures (4.33 percent, split across 500, 503 and 504) and 18 traces at or over the 500ms the latency policy uses (3.00 percent), 17 of which are not also failures, which is the slow count the report prints |
 | `logs.jsonl` | 10 OTLP log records | one per branch `telemetry/logmap.py` has to take: traced and untraced, a severity it does not know and a lowercase one, a record with no severity text at all, an 11KB stack trace, a non-string body, nested and array attributes, an all-zero trace id and a malformed one |
 
 The numbers the README quotes out of `fixtures/` are a script's output over
