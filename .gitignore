@@ -11,3 +11,4 @@ __pycache__/
 *.metrics.txt
 # elasticsearch data volume when it is bound instead of named
 esdata/
+.mypy_cache/
