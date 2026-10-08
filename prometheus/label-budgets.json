@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "note": "Declared label cardinality per metric. The guard in telemetry/cardinality.py enforces max_label_sets at emit time; scripts/check-budgets.py enforces it against a scrape.",
+  "latency_bucket_boundaries_seconds": [
+    0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0
+  ],
+  "metrics": {
+    "http_server_request_duration_seconds": {
+      "kind": "histogram",
+      "labels": {
+        "service": 4,
+        "http_route": 14,
+        "http_request_method": 4,
+        "status_class": 5
+      },
+      "max_label_sets": 1200
+    },
+    "kafka_consumer_lag_records": {
+      "kind": "gauge",
+      "labels": {
+        "service": 4,
+        "topic": 3,
+        "partition": 12
+      },
+      "max_label_sets": 160
+    },
+    "orders_settled_total": {
+      "kind": "counter",
+      "labels": {
+        "service": 4,
+        "settlement_status": 4,
+        "payment_method": 5
+      },
+      "max_label_sets": 96
+    },
+    "otelcol_exporter_send_failed_spans": {
+      "kind": "counter",
+      "labels": {
+        "exporter": 3
+      },
+      "max_label_sets": 8
+    }
+  }
+}
