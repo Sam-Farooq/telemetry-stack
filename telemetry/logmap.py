@@ -227,7 +227,9 @@ def to_es_document(
         "deployment.environment": resource.get("deployment.environment"),
     }
     if was_cut:
-        document["body.truncated"] = True
+        # Not "body.truncated": Elasticsearch reads the dot as a path, and
+        # `body` is a text field, so the document would be rejected.
+        document["body_truncated"] = True
     if cut_keys:
         document["truncated_fields"] = cut_keys
     if has_trace_context(record):

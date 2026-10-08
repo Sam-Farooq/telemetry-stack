@@ -96,7 +96,7 @@ exporters:
     endpoints: ["${env:ELASTICSEARCH_URL}"]
     traces_index: traces-otel-write
     mapping:
-      mode: ecs
+      mode: otel
     num_workers: 4
     sending_queue:
       enabled: true

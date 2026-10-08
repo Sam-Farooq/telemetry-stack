@@ -1,0 +1,94 @@
+{
+  "index_patterns": ["logs-otel-*"],
+  "priority": 200,
+  "_meta": {
+    "description": "Written by the gateway's elasticsearch/logs exporter through the logs-otel-write alias. Dynamic mapping is off: see the note in the repo README about `false` versus `strict`."
+  },
+  "template": {
+    "settings": {
+      "index": {
+        "number_of_shards": 1,
+        "number_of_replicas": 0,
+        "refresh_interval": "5s",
+        "codec": "best_compression",
+        "lifecycle": {
+          "name": "logs-otel",
+          "rollover_alias": "logs-otel-write"
+        },
+        "mapping": {
+          "total_fields": {
+            "limit": 1000
+          }
+        },
+        "sort": {
+          "field": "@timestamp",
+          "order": "desc"
+        }
+      }
+    },
+    "mappings": {
+      "dynamic": false,
+      "properties": {
+        "@timestamp": {"type": "date"},
+        "severity_text": {"type": "keyword"},
+        "severity_number": {"type": "short"},
+        "body": {"type": "match_only_text"},
+        "body_truncated": {"type": "boolean"},
+        "truncated_fields": {"type": "keyword"},
+        "service": {
+          "properties": {
+            "name": {"type": "keyword"},
+            "version": {"type": "keyword"}
+          }
+        },
+        "deployment": {
+          "properties": {
+            "environment": {"type": "keyword"}
+          }
+        },
+        "trace": {
+          "properties": {
+            "id": {"type": "keyword"}
+          }
+        },
+        "span": {
+          "properties": {
+            "id": {"type": "keyword"}
+          }
+        },
+        "attributes": {
+          "dynamic": false,
+          "properties": {
+            "http": {
+              "properties": {
+                "route": {"type": "keyword"},
+                "response": {
+                  "properties": {
+                    "status_code": {"type": "short"}
+                  }
+                }
+              }
+            },
+            "messaging": {
+              "properties": {
+                "system": {"type": "keyword"},
+                "destination": {
+                  "properties": {
+                    "name": {"type": "keyword"}
+                  }
+                }
+              }
+            },
+            "exception": {
+              "properties": {
+                "type": {"type": "keyword"},
+                "message": {"type": "match_only_text"},
+                "stacktrace": {"type": "match_only_text"}
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

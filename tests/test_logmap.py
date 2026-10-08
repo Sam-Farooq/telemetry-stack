@@ -108,7 +108,7 @@ def test_the_document_form_cuts_the_same_attribute(log_records: list[dict]) -> N
     assert len(document["attributes.exception.stacktrace"]) == MAX_BODY_CHARS
     assert document["truncated_fields"] == ["exception.stacktrace"]
     assert document["body"] == "settlement failed"
-    assert "body.truncated" not in document
+    assert "body_truncated" not in document
 
 
 def test_short_attributes_are_untouched_and_non_strings_are_left_alone(
@@ -151,7 +151,7 @@ def test_a_long_body_is_cut_and_the_document_says_so() -> None:
     document = to_es_document(record)
     assert len(document["body"]) == MAX_BODY_CHARS
     assert document["body"].endswith(TRUNCATION_MARKER)
-    assert document["body.truncated"] is True
+    assert document["body_truncated"] is True
 
 
 def test_truncation_keeps_the_limit_and_marks_the_cut() -> None:

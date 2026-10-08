@@ -1,0 +1,39 @@
+{
+  "policy": {
+    "_meta": {
+      "policy_name": "traces-otel",
+      "write_alias": "traces-otel-write",
+      "description": "Same rollover as logs, deleted at 7 days. Spans outnumber log records here and a span older than a week has never answered a question for us."
+    },
+    "phases": {
+      "hot": {
+        "actions": {
+          "rollover": {
+            "max_primary_shard_size": "30gb",
+            "max_age": "1d"
+          },
+          "set_priority": {
+            "priority": 100
+          }
+        }
+      },
+      "warm": {
+        "min_age": "1d",
+        "actions": {
+          "forcemerge": {
+            "max_num_segments": 1
+          },
+          "set_priority": {
+            "priority": 50
+          }
+        }
+      },
+      "delete": {
+        "min_age": "7d",
+        "actions": {
+          "delete": {}
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,77 @@
+{
+  "index_patterns": ["traces-otel-*"],
+  "priority": 200,
+  "_meta": {
+    "description": "Written by the gateway's elasticsearch exporter in otel mapping mode through the traces-otel-write alias. Only the fields the dashboards and the trace lookups use are mapped; span attributes stay in _source and are not searchable."
+  },
+  "template": {
+    "settings": {
+      "index": {
+        "number_of_shards": 1,
+        "number_of_replicas": 0,
+        "refresh_interval": "5s",
+        "codec": "best_compression",
+        "lifecycle": {
+          "name": "traces-otel",
+          "rollover_alias": "traces-otel-write"
+        },
+        "mapping": {
+          "total_fields": {
+            "limit": 1000
+          }
+        },
+        "sort": {
+          "field": "@timestamp",
+          "order": "desc"
+        }
+      }
+    },
+    "mappings": {
+      "dynamic": false,
+      "properties": {
+        "@timestamp": {"type": "date"},
+        "trace_id": {"type": "keyword"},
+        "span_id": {"type": "keyword"},
+        "parent_span_id": {"type": "keyword"},
+        "name": {"type": "keyword"},
+        "kind": {"type": "keyword"},
+        "duration": {"type": "long"},
+        "status": {
+          "properties": {
+            "code": {"type": "keyword"},
+            "message": {"type": "match_only_text"}
+          }
+        },
+        "resource": {
+          "properties": {
+            "attributes": {
+              "dynamic": false,
+              "properties": {
+                "service": {
+                  "properties": {
+                    "name": {"type": "keyword"}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "attributes": {
+          "dynamic": false,
+          "properties": {
+            "http": {
+              "properties": {
+                "route": {"type": "keyword"},
+                "response": {
+                  "properties": {
+                    "status_code": {"type": "short"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "policy": {
+    "_meta": {
+      "policy_name": "logs-otel",
+      "write_alias": "logs-otel-write",
+      "description": "Rollover daily or at 30gb per primary shard, force merge once the index stops being written to, delete at 14 days."
+    },
+    "phases": {
+      "hot": {
+        "actions": {
+          "rollover": {
+            "max_primary_shard_size": "30gb",
+            "max_age": "1d"
+          },
+          "set_priority": {
+            "priority": 100
+          }
+        }
+      },
+      "warm": {
+        "min_age": "2d",
+        "actions": {
+          "forcemerge": {
+            "max_num_segments": 1
+          },
+          "set_priority": {
+            "priority": 50
+          }
+        }
+      },
+      "delete": {
+        "min_age": "14d",
+        "actions": {
+          "delete": {}
+        }
+      }
+    }
+  }
+}
