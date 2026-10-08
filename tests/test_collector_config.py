@@ -13,6 +13,7 @@ from typing import Any
 import pytest
 import yaml
 
+from telemetry.backpressure import resident_items
 from telemetry.logmap import SEVERITY_NUMBERS
 from telemetry.sampling import DEFAULT_POLICY
 
@@ -157,6 +158,13 @@ def test_the_elasticsearch_queue_is_bounded_durable_and_gives_up(
     assert retry["enabled"] is True
     # A retry that never gives up is a queue that never drains.
     assert 0 < int(str(retry["max_elapsed_time"]).removesuffix("s")) <= 300
+
+    batch_max = gateway["processors"]["batch"]["send_batch_max_size"]
+    held = resident_items(queue["queue_size"], batch_max)
+    # The limiter stops the process at 512 MiB. A queue sized in batches hides
+    # how many spans that is, and a queue that can hold more than the limiter
+    # will ever allow is a number that does nothing.
+    assert held <= 600_000, f"{exporter} can hold {held:.0f} items"
 
 
 def test_the_prometheus_exporter_does_not_promote_resource_attributes(

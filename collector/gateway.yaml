@@ -100,7 +100,11 @@ exporters:
     num_workers: 4
     sending_queue:
       enabled: true
-      queue_size: 10000
+      # 256 batches of at most 2,048 spans is 524,288 spans resident in the
+      # worst case. 10,000 batches, which is where this started, is 20.5
+      # million, which the 512 MiB memory_limiter would never let the process
+      # reach: the limiter would trip first and the queue number was decoration.
+      queue_size: 256
       storage: file_storage
     retry_on_failure:
       enabled: true
