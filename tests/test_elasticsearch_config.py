@@ -83,11 +83,13 @@ def test_the_write_aliases_are_the_ones_the_gateway_exports_to(
     import yaml
 
     gateway = yaml.safe_load((repo_root / "collector" / "gateway.yaml").read_text())
-    assert gateway["exporters"]["elasticsearch"]["traces_index"] == (
-        es["ilm-traces.json"]["policy"]["_meta"]["write_alias"]
+    assert (
+        gateway["exporters"]["elasticsearch"]["traces_index"]
+        == es["ilm-traces.json"]["policy"]["_meta"]["write_alias"]
     )
-    assert gateway["exporters"]["elasticsearch/logs"]["logs_index"] == (
-        es["ilm-logs.json"]["policy"]["_meta"]["write_alias"]
+    assert (
+        gateway["exporters"]["elasticsearch/logs"]["logs_index"]
+        == es["ilm-logs.json"]["policy"]["_meta"]["write_alias"]
     )
 
 

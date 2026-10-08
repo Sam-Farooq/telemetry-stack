@@ -55,9 +55,7 @@ def test_the_fixture_shows_the_gateway_dropping(
 def test_counters_are_summed_across_the_error_label(collector_samples: list[Sample]) -> None:
     # send_failed carries a different `error` label per rejection reason, so a
     # single-sample lookup reads one reason and under-reports the rest.
-    traces = next(
-        s for s in read_queue_states(collector_samples) if s.data_type == "traces"
-    )
+    traces = next(s for s in read_queue_states(collector_samples) if s.data_type == "traces")
     assert traces.sent == 1284922.0
 
 

@@ -13,6 +13,7 @@ jobs:
         with: {python-version: "3.11", cache: pip}
       - run: pip install -e ".[dev]"
       - run: ruff check telemetry services scripts tests
+      - run: ruff format --check .
       - run: pytest -q
       # The scripts run against the hand-authored fixtures, so CI exercises
       # the operational tooling and not only the library.

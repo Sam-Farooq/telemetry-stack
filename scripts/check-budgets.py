@@ -40,9 +40,9 @@ def main(argv: list[str] | None = None) -> int:
     if not args.quiet:
         print(f"{len(samples)} samples, {sum(series.values())} series, {len(budgets)} budgets")
         for metric, budget in sorted(budgets.items()):
-            observed = len({
-                tuple(sorted(labels.items())) for name, labels in pairs if name == metric
-            })
+            observed = len(
+                {tuple(sorted(labels.items())) for name, labels in pairs if name == metric}
+            )
             print(
                 f"  {metric}: {observed} label sets, budget {budget.max_label_sets}, "
                 f"declared product {budget.projected_label_sets()}"

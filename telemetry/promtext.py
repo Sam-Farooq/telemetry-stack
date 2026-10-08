@@ -189,6 +189,7 @@ def observations(
     """
     dropped = set(drop_labels)
     for sample in samples:
-        yield base_name(sample.name), {
-            key: value for key, value in sample.labels.items() if key not in dropped
-        }
+        yield (
+            base_name(sample.name),
+            {key: value for key, value in sample.labels.items() if key not in dropped},
+        )

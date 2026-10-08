@@ -43,9 +43,7 @@ def test_the_env_file_covers_every_setting(repo_root: Path) -> None:
         assert key in declared, key
 
 
-@pytest.mark.parametrize(
-    "missing", ["OTEL_EXPORTER_OTLP_ENDPOINT", "KAFKA_BOOTSTRAP"]
-)
+@pytest.mark.parametrize("missing", ["OTEL_EXPORTER_OTLP_ENDPOINT", "KAFKA_BOOTSTRAP"])
 def test_a_service_with_nowhere_to_send_refuses_to_start(missing: str) -> None:
     env = dict(MINIMAL)
     env[missing] = "   "

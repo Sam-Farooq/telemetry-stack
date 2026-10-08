@@ -71,8 +71,8 @@ def test_an_escaped_newline_in_a_label_becomes_a_newline() -> None:
     "line",
     [
         "no_value_here",
-        'x{bad} 1',
-        'x{k=unquoted} 1',
+        "x{bad} 1",
+        "x{k=unquoted} 1",
         'x{k="unterminated} 1',
         '{name="not_supported"} 1',
         'x{k="v"}',
@@ -89,13 +89,8 @@ def test_the_collector_fixture_parses_whole(collector_samples: list[Sample]) -> 
     assert "otelcol_exporter_queue_size" in names
     assert "otelcol_processor_tail_sampling_count_traces_sampled" in names
     # Comments and HELP lines outnumber nothing: every non-comment line is a sample.
-    text = (
-        "# HELP a b\n"
-        "a 1\n"
-        "\n"
-        "# TYPE c counter\n"
-        'c{d="e"} 2\n'
-    )
+    lines = ["# HELP a b", "a 1", "", "# TYPE c counter", 'c{d="e"} 2']
+    text = "\n".join(lines) + "\n"
     assert len(parse(text)) == 2
 
 

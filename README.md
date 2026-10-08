@@ -207,6 +207,7 @@ source .venv/bin/activate
 pip install -e ".[dev]"
 pytest -q
 ruff check telemetry services scripts tests
+ruff format --check .
 ```
 
 188 tests, none of which start a service. The processing logic is pure, so it
