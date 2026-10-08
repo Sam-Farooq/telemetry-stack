@@ -90,8 +90,8 @@ def test_an_exception_log_becomes_an_exception_event(log_records: list[dict]) ->
     event = to_span_event(log_records[2])
     assert event is not None
     assert event.name == "exception"
-    assert event.trace_id == "4bf92f3577b34da6a3ce929d0e0e4736"
-    assert event.span_id == "ac1f3b9d0e8c7a65"
+    assert event.trace_id == "139258a727d98a37ab422d8af5478411"
+    assert event.span_id == "32bdc7d0a89e5fa1"
     assert event.attributes["exception.type"] == "CardDeclined"
     assert event.attributes["exception.message"] == "issuer declined: 51"
     assert event.attributes["log.severity"] == "ERROR"
@@ -190,8 +190,8 @@ def test_a_document_from_a_traced_record_carries_the_correlation_keys(
     log_records: list[dict],
 ) -> None:
     document = to_es_document(log_records[0])
-    assert document["trace.id"] == "4bf92f3577b34da6a3ce929d0e0e4736"
-    assert document["span.id"] == "00f067aa0ba902b7"
+    assert document["trace.id"] == "139258a727d98a37ab422d8af5478411"
+    assert document["span.id"] == "3145f562a345f051"
     assert document["attributes.order.expedited"] is True
 
 
