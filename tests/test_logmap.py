@@ -19,6 +19,7 @@ from telemetry.logmap import (
     to_es_document,
     to_span_event,
     truncate,
+    truncate_attributes,
 )
 
 
@@ -94,6 +95,31 @@ def test_an_exception_log_becomes_an_exception_event(log_records: list[dict]) ->
     assert event.attributes["exception.type"] == "CardDeclined"
     assert event.attributes["exception.message"] == "issuer declined: 51"
     assert event.attributes["log.severity"] == "ERROR"
+    # The body here is six words. The stack trace is the large field, and it
+    # is an attribute, which is the part the first version of this missed.
+    assert len(event.attributes["exception.stacktrace"]) == MAX_BODY_CHARS
+    assert event.attributes["exception.stacktrace"].endswith(TRUNCATION_MARKER)
+    assert event.attributes["log.truncated_fields"] == ["exception.stacktrace"]
+    assert "log.body.truncated" not in event.attributes
+
+
+def test_the_document_form_cuts_the_same_attribute(log_records: list[dict]) -> None:
+    document = to_es_document(log_records[2])
+    assert len(document["attributes.exception.stacktrace"]) == MAX_BODY_CHARS
+    assert document["truncated_fields"] == ["exception.stacktrace"]
+    assert document["body"] == "settlement failed"
+    assert "body.truncated" not in document
+
+
+def test_short_attributes_are_untouched_and_non_strings_are_left_alone(
+    log_records: list[dict],
+) -> None:
+    kept, cut = truncate_attributes({"a": "short", "n": 2, "f": 1.5, "b": True})
+    assert cut == []
+    assert kept == {"a": "short", "n": 2, "f": 1.5, "b": True}
+    event = to_span_event(log_records[0])
+    assert event is not None
+    assert "log.truncated_fields" not in event.attributes
 
 
 def test_an_ordinary_log_becomes_a_log_event(log_records: list[dict]) -> None:

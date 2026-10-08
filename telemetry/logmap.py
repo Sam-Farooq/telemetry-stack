@@ -39,8 +39,9 @@ SEVERITY_NUMBERS: dict[str, int] = {
 }
 DEFAULT_SEVERITY_NUMBER = SEVERITY_NUMBERS["INFO"]
 
-# Bodies longer than this are cut. A 400KB stack trace in an index with
-# 1,000 fields and best_compression is still 400KB of heap during a merge.
+# Long strings are cut here, in both the body and the attributes. A stack
+# trace arrives as `exception.stacktrace`, which is an attribute, so a limit
+# that only reads the body does nothing about the one field that gets large.
 MAX_BODY_CHARS = 2048
 TRUNCATION_MARKER = "[truncated]"
 
@@ -149,6 +150,21 @@ def truncate(text: str, limit: int = MAX_BODY_CHARS) -> tuple[str, bool]:
     return text[: limit - len(TRUNCATION_MARKER)] + TRUNCATION_MARKER, True
 
 
+def truncate_attributes(
+    attributes: Mapping[str, Any], limit: int = MAX_BODY_CHARS
+) -> tuple[dict[str, Any], list[str]]:
+    """Cut every oversized string value, and name the keys that were cut."""
+    out: dict[str, Any] = {}
+    cut_keys: list[str] = []
+    for key, value in attributes.items():
+        if isinstance(value, str) and len(value) > limit:
+            out[key], _ = truncate(value, limit)
+            cut_keys.append(key)
+        else:
+            out[key] = value
+    return out, sorted(cut_keys)
+
+
 def iso_timestamp(time_unix_nano: int | str) -> str:
     """Nanoseconds into the millisecond ISO form date_optional_time accepts.
 
@@ -173,12 +189,15 @@ def to_span_event(
     if not has_trace_context(record):
         return None
     attributes = flatten_attributes(record.get("attributes"))
+    attributes, cut_keys = truncate_attributes(attributes, max_body_chars)
     body, was_cut = truncate(body_text(record), max_body_chars)
     payload: dict[str, Any] = dict(attributes)
     payload["log.severity"] = record.get("severityText") or severity_number(record)
     payload["log.message"] = body
     if was_cut:
         payload["log.body.truncated"] = True
+    if cut_keys:
+        payload["log.truncated_fields"] = cut_keys
     return SpanEvent(
         trace_id=str(record["traceId"]).lower(),
         span_id=str(record["spanId"]).lower(),
@@ -193,7 +212,9 @@ def to_es_document(
     max_body_chars: int = MAX_BODY_CHARS,
 ) -> dict[str, Any]:
     """One flat document. Flat because the index template has dynamic mapping off."""
-    attributes = flatten_attributes(record.get("attributes"))
+    attributes, cut_keys = truncate_attributes(
+        flatten_attributes(record.get("attributes")), max_body_chars
+    )
     resource = flatten_attributes((record.get("resource") or {}).get("attributes"))
     body, was_cut = truncate(body_text(record), max_body_chars)
     document: dict[str, Any] = {
@@ -207,6 +228,8 @@ def to_es_document(
     }
     if was_cut:
         document["body.truncated"] = True
+    if cut_keys:
+        document["truncated_fields"] = cut_keys
     if has_trace_context(record):
         document["trace.id"] = str(record["traceId"]).lower()
         document["span.id"] = str(record["spanId"]).lower()
